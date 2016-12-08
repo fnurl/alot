@@ -1,0 +1,98 @@
+# gruvboxy theme for alot
+# inspired by the gruvbox theme
+# Jody Foo 2016
+
+[global]
+    footer = 'standout','','white,bold','dark gray','#ffd','g52'
+    body = 'default','','dark gray','default','light gray','default'
+    notify_error = 'standout','','white','dark red','#fd0','dark red'
+    notify_normal = 'default','','light gray','dark gray','g0','yellow'
+    prompt = 'default','','light gray','black','g74','default'
+    tag = 'default','','light gray','black','light gray','default'
+    tag_focus = 'standout, bold','','white','dark gray','#ffa','g52'
+
+[help]
+    text = 'default','','default','dark gray','default','g35'
+    section = 'underline','','bold,underline','dark gray','bold,underline','g35'
+    title = 'standout','','white','dark blue','#ffa,underline','g35'
+
+[bufferlist]
+    line_focus = 'standout','','yellow','light gray','#ffa','g52'
+    line_even = 'default','','light gray','black','light gray','default'
+    line_odd = 'default','','light gray','black','light gray','default'
+
+[taglist]
+    line_focus = 'standout','','yellow','light gray','#ffa','g52'
+    line_even = 'default','','light gray','black','light gray','default'
+    line_odd = 'default','','light gray','black','light gray','default'
+
+[thread]
+    arrow_heads = '','','dark red','','yellow','default'
+    arrow_bars = '','','dark red','','yellow','default'
+    attachment = 'default','','light gray','dark gray','#0af','default'
+    attachment_focus = 'underline','','light gray','light green','#0af','#ffa'
+    body = 'default','','light gray','default','g74','default'
+    body_focus = 'default','','light gray','default','g7','#ffa'
+    header = 'default','','white','dark gray','#ffa','default'
+    header_key = 'default','','white','dark gray','dark green','default'
+    header_value = 'default','','light gray','dark gray','brown','default'
+
+    [[summary]]
+        even = 'default','','white','light blue','#ffd','default'
+        odd = 'default','','white','dark blue','#ffd','default'
+        focus = 'standout','','white','light gray','#ffa','g52'
+
+[envelope]
+    body = 'default','','light gray','default','g74','default'
+    header = 'default','','white','dark gray','g74','default'
+    header_key = 'default','','white','dark gray','dark green','default'
+    header_value = 'default','','light gray','dark gray','brown','default'
+
+[search]
+    [[threadline]]
+        normal = 'default','','default','default','light gray','default'
+        focus = 'standout','','light gray','light gray','#ffa','g46'
+        parts = date,mailcount,tags,authors,subject
+        [[[date]]]
+            normal = 'default','','light gray','default','g66','default'
+            focus = 'standout','','yellow','light gray','g66','g46'
+            width = 'fit',10,10
+            alignment = right
+        [[[mailcount]]]
+            normal = 'default','','light gray','default','g66','default'
+            focus = 'standout','','yellow','light gray','g66','g46'
+            width = 'fit', 5,5
+        [[[tags]]]
+            normal = 'bold','','dark cyan','','dark green','default'
+            focus = 'standout','','yellow','light gray','dark green','g46'
+        [[[authors]]]
+            normal = 'default,underline','','light blue','default','brown','default'
+            focus = 'standout','','yellow','light gray','brown','g46'
+            width = 'fit',0,30
+        [[[subject]]]
+            normal = 'default','','light gray','default','g74','default'
+            focus = 'standout','','yellow','light gray','g74','g46'
+            width = 'weight', 1
+        [[[content]]]
+            normal = 'default','','light gray','default','dark gray','default'
+            focus = 'standout','','yellow','light gray','dark gray','g46'
+            width = 'weight', 1
+
+    # highlight threads containing unread messages
+    [[threadline-unread]]
+        tagged_with = 'unread'
+        normal = 'default','','white','default','#ffa','default'
+        parts = date,mailcount,tags,authors,subject
+        [[[date]]]
+            normal = 'default','','light gray','default','light gray','default'
+        [[[mailcount]]]
+            normal = 'default','','light gray','default','light gray','default'
+        [[[tags]]]
+            normal = 'bold','','dark cyan','','light green','default'
+        [[[authors]]]
+            normal = 'default,underline','','yellow','default','brown','default'
+        [[[subject]]]
+            normal = 'default','','light gray','default','#ffa','default'
+        [[[content]]]
+            normal = 'default','','light gray','default','dark gray','default'
+
