@@ -49,7 +49,7 @@ class Completer(object):
 class StringlistCompleter(Completer):
     """completer for a fixed list of strings"""
 
-    def __init__(self, resultlist, ignorecase=True, match_anywhere=False):
+    def __init__(self, resultlist, ignorecase=True, match_anywhere=True):
         """
         :param resultlist: strings used for completion
         :type resultlist: list of str
