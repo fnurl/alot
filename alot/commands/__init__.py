@@ -17,10 +17,23 @@ class Command(object):
     repeatable = False
 
     def __init__(self):
-        self.prehook = None
-        self.posthook = None
         self.undoable = False
         self.help = self.__doc__
+
+        class_ = type(self)
+        class_name = class_.__name__
+        cmdname, mode = reverse_lookup_command(class_)
+
+        # fetch and set pre and post command hooks
+        # they are set to None if not defined in the hooks file
+        get_hook = settings.get_hook
+        self.prehook = (get_hook('pre_%s_%s' % (mode, cmdname)) or
+                        get_hook('pre_global_%s' % cmdname))
+        self.posthook = (get_hook('post_%s_%s' % (mode, cmdname)) or
+                         get_hook('post_global_%s' % cmdname))
+
+        logging.debug("%s prehook: %s", class_name, str(self.prehook))
+        logging.debug("%s posthook: %s", class_name, str(self.posthook))
 
     def apply(self, caller):
         """code that gets executed when this command is applied"""
@@ -40,6 +53,9 @@ COMMANDS = {
     'thread': {},
     'global': {},
 }
+
+# classes as keys with (cmdname, mode) as values
+REVERSE_COMMANDS = {}
 
 
 def lookup_command(cmdname, mode):
@@ -72,6 +88,17 @@ def lookup_parser(cmdname, mode):
     command for `cmdname` when called in `mode`.
     """
     return lookup_command(cmdname, mode)[1]
+
+
+def reverse_lookup_command(class_):
+    """
+    returns (cmdname, mode) for a command class
+
+    :param class_: the class used to look up the cmdname and mode
+    :type class_: class
+    :rtype: (str, str) the class_ is registered, if not return (None, None)
+    """
+    return REVERSE_COMMANDS.get(class_, (None, None))
 
 
 class CommandParseError(Exception):
@@ -136,15 +163,16 @@ class registerCommand(object):
         self.forced = forced or {}
         self.arguments = arguments or []
 
-    def __call__(self, klass):
-        helpstring = self.help or klass.__doc__
+    def __call__(self, class_):
+        helpstring = self.help or class_.__doc__
         argparser = CommandArgumentParser(description=helpstring,
                                           usage=self.usage,
                                           prog=self.name, add_help=False)
         for args, kwargs in self.arguments:
             argparser.add_argument(*args, **kwargs)
-        COMMANDS[self.mode][self.name] = (klass, argparser, self.forced)
-        return klass
+        COMMANDS[self.mode][self.name] = (class_, argparser, self.forced)
+        REVERSE_COMMANDS[class_] = (self.name, self.mode)
+        return class_
 
 
 def commandfactory(cmdline, mode='global'):
@@ -198,13 +226,6 @@ def commandfactory(cmdline, mode='global'):
 
     # create Command
     cmd = cmdclass(**parms)
-
-    # set pre and post command hooks
-    get_hook = settings.get_hook
-    cmd.prehook = get_hook('pre_%s_%s' % (mode, cmdname)) or \
-        get_hook('pre_global_%s' % cmdname)
-    cmd.posthook = get_hook('post_%s_%s' % (mode, cmdname)) or \
-        get_hook('post_global_%s' % cmdname)
 
     return cmd
 

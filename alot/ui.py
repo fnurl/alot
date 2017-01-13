@@ -10,6 +10,7 @@ import urwid
 
 from .settings import settings
 from .buffers import BufferlistBuffer, SearchBuffer
+import commands
 from .commands import globals
 from .commands import commandfactory
 from .commands import CommandCanceled
@@ -650,10 +651,12 @@ class UI(object):
         :type cmd: :class:`~alot.commands.Command`
         """
         if cmd:
+            mode, cmdname = commands.reverse_lookup_command(type(cmd))
+
             # define (callback) function that invokes post-hook
             def call_posthook(_):
                 if cmd.posthook:
-                    logging.info('calling post-hook')
+                    logging.info('calling post-hook for %s.%s', mode, cmdname)
                     return defer.maybeDeferred(cmd.posthook,
                                                ui=self,
                                                dbm=self.dbman,
@@ -663,6 +666,8 @@ class UI(object):
             def call_apply(_):
                 return defer.maybeDeferred(cmd.apply, self)
 
+            if cmd.prehook:
+                logging.info('calling pre-hook for %s.%s', mode, cmdname)
             prehook = cmd.prehook or (lambda **kwargs: None)
             d = defer.maybeDeferred(prehook, ui=self, dbm=self.dbman, cmd=cmd)
             d.addCallback(call_apply)
