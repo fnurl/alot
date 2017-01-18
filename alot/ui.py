@@ -651,13 +651,16 @@ class UI(object):
         :type cmd: :class:`~alot.commands.Command`
         """
         if cmd:
-            mode, cmdname = commands.reverse_lookup_command(type(cmd))
+            class_ = type(cmd)
+            class_name = class_.__name__
+            prehook = class_.prehook
+            posthook = class_.posthook
 
             # define (callback) function that invokes post-hook
             def call_posthook(_):
-                if cmd.posthook:
-                    logging.info('calling post-hook for %s.%s', mode, cmdname)
-                    return defer.maybeDeferred(cmd.posthook,
+                if posthook:
+                    logging.info('calling hook: %s', posthook.__name__)
+                    return defer.maybeDeferred(posthook,
                                                ui=self,
                                                dbm=self.dbman,
                                                cmd=cmd)
@@ -666,9 +669,10 @@ class UI(object):
             def call_apply(_):
                 return defer.maybeDeferred(cmd.apply, self)
 
-            if cmd.prehook:
-                logging.info('calling pre-hook for %s.%s', mode, cmdname)
-            prehook = cmd.prehook or (lambda **kwargs: None)
+            if prehook:
+                logging.info('calling hook: %s', prehook.__name__)
+            else:
+                prehook = (lambda **kwargs: None)
             d = defer.maybeDeferred(prehook, ui=self, dbm=self.dbman, cmd=cmd)
             d.addCallback(call_apply)
             d.addCallback(call_posthook)

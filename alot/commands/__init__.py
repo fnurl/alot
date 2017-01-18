@@ -15,25 +15,43 @@ class Command(object):
 
     """base class for commands"""
     repeatable = False
+    mode = "" 
+    cmdname = "" 
+
+    # posthook and prehook are set to False when no lookup has been made.
+    # Will be set to None if lookup has been done, but no hooks have been
+    # found.
+    posthook = False
+    prehook = False
 
     def __init__(self):
         self.undoable = False
         self.help = self.__doc__
 
-        class_ = type(self)
-        class_name = class_.__name__
-        cmdname, mode = reverse_lookup_command(class_)
-
         # fetch and set pre and post command hooks
         # they are set to None if not defined in the hooks file
+        class_ = type(self)
         get_hook = settings.get_hook
-        self.prehook = (get_hook('pre_%s_%s' % (mode, cmdname)) or
-                        get_hook('pre_global_%s' % cmdname))
-        self.posthook = (get_hook('post_%s_%s' % (mode, cmdname)) or
-                         get_hook('post_global_%s' % cmdname))
-
-        logging.debug("%s prehook: %s", class_name, str(self.prehook))
-        logging.debug("%s posthook: %s", class_name, str(self.posthook))
+        if class_.prehook == False:
+            class_.prehook = (get_hook('pre_%s_%s' % (class_.mode, class_.cmdname)) or
+                              get_hook('pre_global_%s' % class_.cmdname))
+            if class_.prehook:
+                logging.debug("hook %s attached to %s.%s",
+                            str(class_.prehook),
+                            class_.mode,
+                            class_.cmdname)
+            else:
+                logging.debug("%s.%s has no pre hook", class_.mode, class_.cmdname)
+        if class_.posthook == False:
+            class_.posthook = (get_hook('post_%s_%s' % (class_.mode, class_.cmdname)) or
+                               get_hook('post_global_%s' % class_.cmdname))
+            if class_.posthook:
+                logging.debug("hook %s attached to %s.%s",
+                            str(class_.posthook),
+                            class_.mode,
+                            class_.cmdname)
+            else:
+                logging.debug("%s.%s has no post hook", class_.mode, class_.cmdname)
 
     def apply(self, caller):
         """code that gets executed when this command is applied"""
@@ -45,6 +63,7 @@ class CommandCanceled(Exception):
     """
     pass
 
+
 COMMANDS = {
     'search': {},
     'envelope': {},
@@ -53,9 +72,6 @@ COMMANDS = {
     'thread': {},
     'global': {},
 }
-
-# classes as keys with (cmdname, mode) as values
-REVERSE_COMMANDS = {}
 
 
 def lookup_command(cmdname, mode):
@@ -84,17 +100,6 @@ def lookup_parser(cmdname, mode):
     command for `cmdname` when called in `mode`.
     """
     return lookup_command(cmdname, mode)[1]
-
-
-def reverse_lookup_command(class_):
-    """
-    returns (cmdname, mode) for a command class
-
-    :param class_: the class used to look up the cmdname and mode
-    :type class_: class
-    :rtype: (str, str) the class_ is registered, if not return (None, None)
-    """
-    return REVERSE_COMMANDS.get(class_, (None, None))
 
 
 class CommandParseError(Exception):
@@ -166,8 +171,15 @@ class registerCommand(object):
                                           prog=self.name, add_help=False)
         for args, kwargs in self.arguments:
             argparser.add_argument(*args, **kwargs)
+
+        # populate COMMANDS for cmdname to Command lookup and 
         COMMANDS[self.mode][self.name] = (class_, argparser, self.forced)
-        REVERSE_COMMANDS[class_] = (self.name, self.mode)
+        class_.mode = self.mode
+        class_.cmdname = self.name
+
+        print("registering %s to command %s.%s.." %
+                (str(class_), self.mode, self.name))
+
         return class_
 
 
