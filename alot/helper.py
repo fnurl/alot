@@ -638,7 +638,7 @@ class classproperty(object):
 
     The decorator is applied to a method to make it a class property. E.g.
 
-    .. code-block:: python
+    .. code-block
 
         class Foo(object):
 

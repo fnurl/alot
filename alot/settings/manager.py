@@ -309,10 +309,16 @@ class SettingsManager(object):
         return {'normal': normal, 'focussed': focus, 'translated': translated}
 
     def get_hook(self, key):
-        """return hook (`callable`) identified by `key`"""
+        """Return a hook (`callable`) identified by `key`
+       
+        :param key: name of hook to get (the hooks function name).
+        :type key: str
+        :returns: a callable `Hook` object or `None` if no hook was found
+        :rtype: :py:class:`Hook`
+        """
         if self.hooks:
             if key in self.hooks.__dict__:
-                return self.hooks.__dict__[key]
+                return Hook(self.hooks.__dict__[key])
         return None
 
     def get_mapped_input_keysequences(self, mode='global', prefix=u''):
@@ -461,3 +467,20 @@ class SettingsManager(object):
             else:
                 rep = pretty_datetime(d)
         return rep
+
+
+class Hook(object):
+    """A callable hook object."""
+    def __init__(self, hook_func):
+        self.hook_func = hook_func 
+
+    @property
+    def name(self):
+        return self.hook_func.__name__
+
+    def __get__(self, instance, owner):
+        return self
+
+    def __call__(self, *args, **kwargs):
+        logging.debug("hook-objected %s called", self.name)
+        return self.hook_func(*args, **kwargs)

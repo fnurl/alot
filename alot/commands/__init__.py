@@ -10,7 +10,7 @@ import os
 import re
 
 from ..settings import settings
-from ..helper import split_commandstring, string_decode
+from ..helper import split_commandstring, string_decode, classproperty
 
 
 class Command(object):
@@ -23,37 +23,49 @@ class Command(object):
     # posthook and prehook are set to False when no lookup has been made.
     # Will be set to None if lookup has been done, but no hooks have been
     # found.
-    posthook = False
-    prehook = False
+    _posthook = False
+    _prehook = False
+
+    @classproperty
+    def id(cls):
+        """Mode and command name of instance as string."""
+        return "{}.{}".format(cls.mode, cls.cmdname)
+
+    @classproperty
+    def prehook(cls):
+        """Fetch and set pre command hook.
+
+        `_prehook` is set to `None` if not defined in the hooks file.
+        """
+        get_hook = settings.get_hook
+        if cls._prehook is False:
+            cls._prehook = (get_hook('pre_%s_%s' % (cls.mode, cls.cmdname)) or
+                            get_hook('pre_global_%s' % cls.cmdname))
+            if cls._prehook:
+                logging.debug("attached Hook(%s) to command %s",
+                              cls._prehook.name,
+                              cls.id)
+        return cls._prehook
+
+    @classproperty
+    def posthook(cls):
+        """Fetch and set post command hook.
+
+        `_posthook` is set to `None` if not defined in the hooks file.
+        """
+        get_hook = settings.get_hook
+        if cls._posthook is False:
+            cls._posthook = (get_hook('post_%s_%s' % (cls.mode, cls.cmdname)) or
+                             get_hook('post_global_%s' % cls.cmdname))
+            if cls._posthook:
+                logging.debug("attached Hook(%s) to command %s",
+                              cls._posthook.name,
+                              cls.id)
+        return cls._posthook
 
     def __init__(self):
         self.undoable = False
         self.help = self.__doc__
-
-        # fetch and set pre and post command hooks
-        # they are set to None if not defined in the hooks file
-        class_ = type(self)
-        get_hook = settings.get_hook
-        if class_.prehook == False:
-            class_.prehook = (get_hook('pre_%s_%s' % (class_.mode, class_.cmdname)) or
-                              get_hook('pre_global_%s' % class_.cmdname))
-            if class_.prehook:
-                logging.debug("hook %s attached to %s.%s",
-                            str(class_.prehook),
-                            class_.mode,
-                            class_.cmdname)
-            else:
-                logging.debug("%s.%s has no pre hook", class_.mode, class_.cmdname)
-        if class_.posthook == False:
-            class_.posthook = (get_hook('post_%s_%s' % (class_.mode, class_.cmdname)) or
-                               get_hook('post_global_%s' % class_.cmdname))
-            if class_.posthook:
-                logging.debug("hook %s attached to %s.%s",
-                            str(class_.posthook),
-                            class_.mode,
-                            class_.cmdname)
-            else:
-                logging.debug("%s.%s has no post hook", class_.mode, class_.cmdname)
 
     def apply(self, caller):
         """code that gets executed when this command is applied"""
@@ -178,9 +190,6 @@ class registerCommand(object):
         COMMANDS[self.mode][self.name] = (class_, argparser, self.forced)
         class_.mode = self.mode
         class_.cmdname = self.name
-
-        print("registering %s to command %s.%s.." %
-                (str(class_), self.mode, self.name))
 
         return class_
 
