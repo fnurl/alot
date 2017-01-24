@@ -2,6 +2,8 @@
 # Copyright (C) 2011-2012  Patrick Totzke <patricktotzke@gmail.com>
 # This file is released under the GNU GPL, version 3 or a later revision.
 # For further details see the COPYING file
+from __future__ import absolute_import
+
 from datetime import timedelta
 from datetime import datetime
 from collections import deque
@@ -433,6 +435,20 @@ def libmagic_version_at_least(version):
 
 # TODO: make this work on blobs, not paths
 def mimewrap(path, filename=None, ctype=None):
+    """Take the contents of the given path and wrap them into an email MIME
+    part according to the content type.  The content type is auto detected from
+    the actual file contents and the file name if it is not given.
+
+    :param path: the path to the file contents
+    :type path: str
+    :param filename: the file name to use in the generated MIME part
+    :type filename: str or None
+    :param ctype: the content type of the file contents in path
+    :type ctype: str or None
+    :returns: the message MIME part storing the data from path
+    :rtype: subclasses of email.mime.base.MIMEBase
+    """
+
     with open(path, 'rb') as f:
         content = f.read()
     if not ctype:
@@ -470,6 +486,15 @@ def mimewrap(path, filename=None, ctype=None):
 
 
 def shell_quote(text):
+    """Escape the given text for passing it to the shell for interpretation.
+    The resulting string will be parsed into one "word" (in the sense used in
+    the shell documentation, see sh(1)) by the shell.
+
+    :param text: the text to quote
+    :type text: str
+    :returns: the quoted text
+    :rtype: str
+    """
     return "'%s'" % text.replace("'", """'"'"'""")
 
 
@@ -485,6 +510,15 @@ def tag_cmp(a, b):
 
 
 def humanize_size(size):
+    """Create a nice human readable representation of the given number
+    (understood as bytes) using the "K" and "M" suffixes to indicate kilo- and
+    megabytes.  They are understood to be 1024 based.
+
+    :param size: the number to convert
+    :type size: int
+    :returns: the human readable representation of size
+    :rtype: str
+    """
     for factor, format_string in ((1, '%i'),
                                   (1024, '%iK'),
                                   (1024 * 1024, '%.1fM')):
@@ -597,3 +631,29 @@ def email_as_string(mail):
                            as_string, flags=re.MULTILINE)
 
     return as_string
+
+
+class classproperty(object):
+    """Decorator to emulate 'class properties' using class level methods.
+
+    The decorator is applied to a method to make it a class property. E.g.
+
+    .. code-block:: python
+
+        class Foo(object):
+
+            _some_property = 0.5
+
+            @classproperty
+            def some_property(cls):
+                return cls._some_proprerty
+    """
+
+    def __init__(self, func):
+        """Store method to be used to return property value."""
+        self.__func__ = func
+
+    def __get__(self, instance, cls):
+        """Return value of property."""
+        return self.__func__(cls)
+
