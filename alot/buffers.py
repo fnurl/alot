@@ -1,6 +1,8 @@
 # Copyright (C) 2011-2012  Patrick Totzke <patricktotzke@gmail.com>
 # This file is released under the GNU GPL, version 3 or a later revision.
 # For further details see the COPYING file
+from __future__ import absolute_import
+
 import logging
 import os
 
@@ -111,6 +113,7 @@ class BufferlistBuffer(Buffer):
         return bufferlinewidget.get_buffer()
 
     def focus_first(self):
+        """Focus the first line in the buffer list."""
         self.body.set_focus(0)
 
 
@@ -441,9 +444,11 @@ class ThreadBuffer(Buffer):
 
     # needed for ui.get_deep_focus..
     def get_focus(self):
+        "Get the focus from the underlying body widget."
         return self.body.get_focus()
 
     def set_focus(self, pos):
+        "Set the focus in the underlying body widget."
         logging.debug('setting focus to %s ', pos)
         self.body.set_focus(pos)
 
@@ -658,6 +663,7 @@ class TagListBuffer(Buffer):
         self.taglist.set_focus(focusposition % len(displayedtags))
 
     def focus_first(self):
+        """Focus the first line in the tag list."""
         self.body.set_focus(0)
 
     def focus_last(self):

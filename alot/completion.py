@@ -1,6 +1,8 @@
 # Copyright (C) 2011-2012  Patrick Totzke <patricktotzke@gmail.com>
 # This file is released under the GNU GPL, version 3 or a later revision.
 # For further details see the COPYING file
+from __future__ import absolute_import
+
 import abc
 import argparse
 import glob
@@ -521,16 +523,34 @@ class CommandLineCompleter(Completer):
 
 
 class PathCompleter(Completer):
+
     """completion for paths"""
+
     def complete(self, original, pos):
         if not original:
             return [('~/', 2)]
         prefix = os.path.expanduser(original[:pos])
 
         def escape(path):
+            """Escape all backslashes and spaces in given path with a
+            backslash.
+
+            :param path: the path to escape
+            :type path: str
+            :returns: the escaped path
+            :rtype: str
+            """
             return path.replace('\\', '\\\\').replace(' ', r'\ ')
 
         def deescape(escaped_path):
+            """Remove escaping backslashes in front of spaces and backslashes.
+
+            :param escaped_path: a path potentially with escaped spaces and
+                backslashs
+            :type escaped_path: str
+            :returns: the actual path
+            :rtype: str
+            """
             return escaped_path.replace('\\ ', ' ').replace('\\\\', '\\')
 
         def prep(path):

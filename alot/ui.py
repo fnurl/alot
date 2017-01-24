@@ -1,6 +1,8 @@
 # Copyright (C) 2011-2012  Patrick Totzke <patricktotzke@gmail.com>
 # This file is released under the GNU GPL, version 3 or a later revision.
 # For further details see the COPYING file
+from __future__ import absolute_import
+
 import logging
 import os
 import signal
@@ -113,6 +115,19 @@ class UI(object):
         # start urwids mainloop
         self.mainloop.run()
 
+    def _error_handler(self, failure):
+        """Default handler for exceptions in callbacks."""
+        if failure.check(CommandParseError):
+            self.notify(failure.getErrorMessage(), priority='error')
+        elif failure.check(CommandCanceled):
+            self.notify("operation cancelled", priority='error')
+        else:
+            logging.error(failure.getTraceback())
+            errmsg = failure.getErrorMessage()
+            if errmsg:
+                msg = "{}\n(check the log for details)".format(errmsg)
+                self.notify(msg, priority='error')
+
     def _input_filter(self, keys, raw):
         """
         handles keypresses.
@@ -138,8 +153,8 @@ class UI(object):
                 self._unlock_callback()
         # otherwise interpret keybinding
         else:
-            # define callback that resets input queue
             def clear(*_):
+                """Callback that resets the input queue."""
                 if self._alarm is not None:
                     self.mainloop.remove_alarm(self._alarm)
                 self.input_queue = []
@@ -230,19 +245,8 @@ class UI(object):
         for cmdstring in split_commandline(cmdline):
             d.addCallback(apply_this_command, cmdstring)
 
-        # add sequence-wide error handler
-        def errorHandler(failure):
-            if failure.check(CommandParseError):
-                self.notify(failure.getErrorMessage(), priority='error')
-            elif failure.check(CommandCanceled):
-                self.notify("operation cancelled", priority='error')
-            else:
-                logging.error(failure.getTraceback())
-                errmsg = failure.getErrorMessage()
-                if errmsg:
-                    msg = "%s\n(check the log for details)"
-                    self.notify(msg % errmsg, priority='error')
-        d.addErrback(errorHandler)
+        d.addErrback(self._error_handler)
+
         return d
 
     @staticmethod
@@ -291,8 +295,8 @@ class UI(object):
         oldroot = self.mainloop.widget
 
         def select_or_cancel(text):
-            # restore main screen and invoke callback
-            # (delayed return) with given text
+            """Restore the main screen and invoce the callback (delayed return)
+            with the given text."""
             self.mainloop.widget = oldroot
             self._passall = False
             d.callback(text)
@@ -498,6 +502,8 @@ class UI(object):
         oldroot = self.mainloop.widget
 
         def select_or_cancel(text):
+            """Restore the main screen and invoce the callback (delayed return)
+            with the given text."""
             self.mainloop.widget = oldroot
             self._passall = False
             d.callback(text)
@@ -656,8 +662,8 @@ class UI(object):
             prehook = class_.prehook
             posthook = class_.posthook
 
-            # define (callback) function that invokes post-hook
             def call_posthook(_):
+                """Callback function that will invoke the post-hook."""
                 if posthook:
                     logging.info('calling hook: %s', posthook.__name__)
                     return defer.maybeDeferred(posthook,
@@ -675,7 +681,7 @@ class UI(object):
                 prehook = (lambda **kwargs: None)
             d = defer.maybeDeferred(prehook, ui=self, dbm=self.dbman, cmd=cmd)
             d.addCallback(call_apply)
-            d.addCallback(call_posthook)
+            d.addCallbacks(call_posthook, self._error_handler)
             return d
 
     def handle_signal(self, signum, frame):

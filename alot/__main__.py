@@ -1,6 +1,8 @@
 # Copyright (C) 2011-2012  Patrick Totzke <patricktotzke@gmail.com>
 # This file is released under the GNU GPL, version 3 or a later revision.
 # For further details see the COPYING file
+from __future__ import absolute_import
+
 import argparse
 import logging
 import os
@@ -16,6 +18,8 @@ from alot.commands import CommandParseError, COMMANDS
 
 
 def main():
+    """The main entry point to alot.  It parses the command line and prepares
+    for the user interface main loop to run."""
     # set up the parser to parse the command line options.
     parser = argparse.ArgumentParser()
     parser.add_argument('-v', '--version', action='version',
